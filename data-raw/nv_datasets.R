@@ -17,4 +17,4 @@ nv_datasets <- tribble(
   "banc",      "Drosophila (female)", "brain + VNC",  "rootid",     "supervoxel",   "cave",     "bancr",         "CAVE datastack; cell typing in a CAVE table, not on the neuron."
 )
 
-# usethis::use_data(nv_datasets, overwrite = TRUE)   # uncomment once reviewed
+usethis::use_data(nv_datasets, overwrite = TRUE)

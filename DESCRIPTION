@@ -19,6 +19,8 @@ Description: An MCP (Model Context Protocol) server that gives coding agents
     top; the tools compose with 'btw' in a single server.
 License: GPL-3
 Encoding: UTF-8
+LazyData: true
+LazyDataCompression: xz
 Roxygen: list(markdown = TRUE)
 Imports:
     yaml,
@@ -39,3 +41,5 @@ Suggests:
     DBI
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0
+Depends: 
+    R (>= 3.5)
