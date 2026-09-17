@@ -22,7 +22,7 @@ test_that(".package_roles seeds a title per installed package", {
 test_that("build_index folds in guide, datasets and package roles", {
   od <- build_test_index()
   idx <- .load_index(od)
-  expect_identical(idx$manifest$schema_version, "3")
+  expect_identical(idx$manifest$schema_version, "4")
   expect_gt(idx$manifest$n_datasets, 0)
   expect_true(!is.na(idx$guide) && nzchar(idx$guide))
   ok <- Filter(function(p) identical(p$status, "ok"), idx$manifest$packages)
