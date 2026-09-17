@@ -70,7 +70,13 @@
     } else {
       "error"
     }
-    return(list(status = status, error = msg, shape = NULL))
+    # callr wraps the child's error; surface the underlying cause so the
+    # freshness signal is diagnostic, not just "in callr subprocess".
+    if (!is.null(res$parent)) {
+      pm <- conditionMessage(res$parent)
+      if (nzchar(pm)) msg <- pm
+    }
+    return(list(status = status, error = trimws(msg), shape = NULL))
   }
   list(status = "ok", error = NA_character_, shape = .clean_shape(res))
 }
