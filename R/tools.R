@@ -16,10 +16,34 @@
 # Not yet implemented -- Phase 1 scaffolds signatures and contracts only.
 
 #' Tool: orientation guide to the natverse
-#' @param lean If `TRUE` (default) omit drill-down detail.
-#' @return A guide document (package roles, altitude map, dataset roster).
+#'
+#' Returns the curated altitude map plus an auto-seeded package roster (one line
+#' per indexed package, from its DESCRIPTION Title) and the dataset roster. This
+#' is the orientation an agent should read before searching.
+#' @param lean If `TRUE` (default) return the guide, package roster and dataset
+#'   names; if `FALSE` also include the full dataset records.
+#' @param index Optional index path/dir.
+#' @return A guide document (altitude map, package roles, dataset roster).
 #' @noRd
-tool_guide <- function(lean = TRUE) .nyi("guide")
+tool_guide <- function(lean = TRUE, index = NULL) {
+  idx <- .load_index(index)
+  ok <- Filter(function(p) identical(p$status, "ok"), idx$manifest$packages)
+  packages <- lapply(ok, function(p) {
+    list(package = p$name, coverage = p$coverage,
+         role = p$role %||% NA_character_)
+  })
+  datasets <- if (isTRUE(lean)) {
+    names(idx$datasets)
+  } else {
+    unname(idx$datasets)
+  }
+  list(
+    guide = idx$guide,
+    packages = packages,
+    datasets = datasets,
+    note = "Use `find` for task -> function, `signature` for exact API, `dataset` for dataset facts."
+  )
+}
 
 #' Tool: map a task to candidate functions + a canonical snippet
 #'
@@ -123,8 +147,32 @@ tool_snippet <- function(task = NULL, id = NULL, index = NULL) {
 }
 
 #' Tool: dataset facts (id conventions, coord space, auth, quirks)
+#'
+#' Looks up a dataset by id or alias (case-insensitive) in the curated
+#' `nv_datasets` facts. Returns the row, or the available names when unmatched.
+#' @param name Dataset id or alias (e.g. `"flywire"`).
+#' @param index Optional index path/dir.
 #' @noRd
-tool_dataset <- function(name) .nyi("dataset")
+tool_dataset <- function(name, index = NULL) {
+  idx <- .load_index(index)
+  ds <- idx$datasets
+  if (!length(ds)) return(list(error = "no-datasets"))
+  key <- tolower(trimws(name))
+  hit <- ds[[names(ds)[match(key, tolower(names(ds)))]]]
+  if (is.null(hit)) {
+    aliases <- vapply(ds, function(d) {
+      a <- d$aliases %||% ""
+      if (length(a) != 1L || is.na(a)) "" else tolower(a)
+    }, character(1))
+    idxa <- which(vapply(strsplit(aliases, "\\s*,\\s*"),
+                         function(v) key %in% v, logical(1)))
+    if (length(idxa)) hit <- ds[[idxa[1]]]
+  }
+  if (is.null(hit)) {
+    return(list(error = "not-found", name = name, available = names(ds)))
+  }
+  hit
+}
 
 #' Tool: check code against real natverse symbols / args / deprecations
 #'
