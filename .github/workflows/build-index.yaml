@@ -1,0 +1,103 @@
+# Build the offline-core natmcp index and publish it to GitHub Pages.
+# fetch_index() pulls the result from https://flyconnectome.github.io/natmcp/.
+#
+# This is the CI half of the deployment split (PLAN.md, Option C): the index
+# (data) is rebuilt on a schedule so signatures track the installed dev
+# natverse, while the package (code) ships separately. Only the offline core is
+# built here (no CAVE/neuprint tokens); online enrichment runs elsewhere.
+on:
+  workflow_dispatch:
+    inputs:
+      shapes:
+        description: "Run examples for freshness + return shapes"
+        type: boolean
+        default: true
+  schedule:
+    - cron: "17 4 * * 1"   # weekly, Monday 04:17 UTC
+
+name: build-index
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      # System libraries the natverse core needs (rgl/OpenGL, XML, image IO).
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxml2-dev \
+            libcurl4-openssl-dev libssl-dev libgit2-dev \
+            libfontconfig1-dev libharfbuzz-dev libfribidi-dev \
+            libfreetype6-dev libpng-dev libtiff5-dev libjpeg-dev cmake
+
+      # natmcp's own dependencies (from DESCRIPTION), then install natmcp.
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: any::pak
+          dependencies: '"hard"'
+
+      - name: Install natmcp
+        run: R CMD INSTALL --no-multiarch --with-keep.source .
+
+      # Install the packages the index introspects. Best-effort: build_index()
+      # skips anything missing, so a single failing install does not abort.
+      - name: Install natverse targets
+        run: |
+          Rscript -e '
+            cfg <- yaml::read_yaml("inst/config/packages.yml")
+            core <- unlist(cfg$tier_A_core, use.names = FALSE)
+            adjacent <- names(cfg$adjacent)
+            gh <- paste0("natverse/", core)
+            for (p in c(gh, adjacent)) {
+              tryCatch(
+                pak::pkg_install(p, ask = FALSE, upgrade = FALSE),
+                error = function(e) message("skip ", p, ": ", conditionMessage(e)))
+            }
+          '
+
+      - name: Build index
+        run: |
+          Rscript -e '
+            shapes <- tolower(Sys.getenv("NATMCP_SHAPES", "true")) == "true"
+            natmcp::build_index(scope = "offline", shapes = shapes,
+                                out_dir = "_site")
+          '
+        env:
+          NATMCP_SHAPES: ${{ github.event.inputs.shapes || 'true' }}
+
+      - name: Summarise manifest
+        run: Rscript -e 'cat(readLines("_site/manifest.json"), sep = "\n")'
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: "_site"
+
+  deploy:
+    needs: build-index
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
