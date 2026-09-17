@@ -84,8 +84,8 @@ natmcp_tools <- function(tools = NULL, index = NULL) {
   if (is.null(tools)) return(unname(defs))
   unknown <- setdiff(tools, names(defs))
   if (length(unknown)) {
-    cli::cli_warn("Unknown tool group{?s}: {.val {unknown}}. \\
-                  Available: {.val {names(defs)}}.")
+    cli::cli_warn("Unknown tool group{cli::qty(length(unknown))}{?s}: \\
+                  {.val {unknown}}. Available: {.val {names(defs)}}.")
   }
   unname(defs[intersect(tools, names(defs))])
 }
