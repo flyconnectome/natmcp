@@ -1,0 +1,41 @@
+Package: natmcp
+Type: Package
+Title: MCP Server Providing Grounded natverse Knowledge to Coding Agents
+Version: 0.0.0.9000
+Authors@R:
+    person("Gregory", "Jefferis", email = "jefferis@gmail.com",
+           role = c("aut", "cre"), comment = c(ORCID = "0000-0002-0587-9355"))
+Description: An MCP (Model Context Protocol) server that gives coding agents
+    authoritative, current, token-efficient access to natverse ground truth so
+    they can generate, extend, optimise and repurpose natverse analysis code
+    efficiently. It builds a live index by introspecting installed natverse
+    packages (namespaces, formals, Rd, executed examples) and harvesting
+    machine-readable artefacts (pkgdown reference groups, vignettes, examples),
+    augmented by a small curated corpus (a package/altitude guide, a dataset
+    facts table, task-oriented snippets). The index backs six lean tools:
+    guide, find, signature, snippet, dataset and lint. Built on 'mcptools'
+    (transport) and 'ellmer' (typed tools), delegating generic package
+    documentation to 'btw' and adding the curated natverse knowledge layer on
+    top; the tools compose with 'btw' in a single server.
+License: GPL-3
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Imports:
+    yaml,
+    jsonlite,
+    cli,
+    fs,
+    tools,
+    ellmer,
+    mcptools,
+    btw
+Suggests:
+    testthat (>= 3.0.0),
+    roxygen2,
+    callr,
+    gert,
+    gh,
+    RSQLite,
+    DBI
+Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0
