@@ -102,7 +102,7 @@ tool_signature <- function(symbol, index = NULL) {
     return(list(error = "not-found", symbol = symbol,
                 did_you_mean = .suggest_symbols(idx, symbol)))
   }
-  list(
+  out <- list(
     id = rec$id,
     usage = rec$usage,
     description = rec$description,
@@ -116,6 +116,16 @@ tool_signature <- function(symbol, index = NULL) {
       "Full help via btw_tool_docs_help_page(\"%s\", package = \"%s\").",
       rec$name, rec$package)
   )
+  # Phase 6 enrichment (present only when the index was built with shapes = TRUE).
+  if (!is.null(rec$example_return_shape)) {
+    out$return_shape <- c(
+      rec$example_return_shape,
+      list(from = "shape of the documented example's last value"))
+  }
+  if (!is.null(rec$example_status) && !identical(rec$example_status, "none")) {
+    out$example_status <- rec$example_status
+  }
+  out
 }
 
 #' Tool: canonical usage snippet(s)

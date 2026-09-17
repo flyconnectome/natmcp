@@ -30,12 +30,18 @@
 #'   (default `inst/index`).
 #' @param scope `"offline"` (CI-runnable core) or `"online"` (enrichment
 #'   overlay needing CAVE/neuprint auth).
+#' @param shapes If `TRUE`, run each function's offline-runnable `@examples` in
+#'   a sandboxed [callr] process to capture a freshness status and a best-effort
+#'   return shape (Phase 6). Off by default; CI turns it on. Requires `callr`.
+#' @param shape_timeout Per-example wall-clock timeout in seconds when
+#'   `shapes = TRUE`.
 #' @return Invisibly, the path to the written index directory.
 #' @export
 build_index <- function(config = system.file("config", "packages.yml",
                                               package = "natmcp"),
                         out_dir = file.path("inst", "index"),
-                        scope = c("offline", "online")) {
+                        scope = c("offline", "online"),
+                        shapes = FALSE, shape_timeout = 60) {
   scope <- match.arg(scope)
   if (identical(scope, "online")) {
     stop("online enrichment scope is not implemented yet (Phase 6/7). ",
@@ -78,6 +84,17 @@ build_index <- function(config = system.file("config", "packages.yml",
     cli::cli_alert_success("{.pkg {p}} {ver}: {length(recs)} signature{?s}")
   }
 
+  # Phase 6: run offline-runnable examples for freshness + return shapes.
+  if (isTRUE(shapes)) {
+    signatures <- .capture_shapes(signatures, timeout = shape_timeout)
+  }
+  # example_code is a build-time artifact (snippets carry runnable code); drop it
+  # so it never bloats the served index.
+  signatures <- lapply(signatures, function(r) {
+    r$example_code <- NULL
+    r
+  })
+
   # Tier-2 harvest: snippets (Rd examples + vignettes), tagged against the full
   # signature set, plus a lexical retrieval document.
   name_index <- .name_index(list(signatures = signatures))
@@ -110,6 +127,7 @@ build_index <- function(config = system.file("config", "packages.yml",
     n_signatures = length(signatures),
     n_snippets = length(snippets),
     n_datasets = length(datasets),
+    examples = if (isTRUE(shapes)) .freshness(signatures) else NULL,
     packages = unname(pkgmeta)
   )
   index <- list(manifest = manifest, signatures = signatures,
@@ -183,6 +201,7 @@ extract_signatures <- function(pkg, coverage = "full", allowlist = NULL) {
       description = if (!is.null(entry)) entry$description else NA_character_,
       value_text = if (!is.null(entry)) entry$value else NA_character_,
       examples_text = if (!is.null(entry)) entry$examples else NA_character_,
+      example_code = if (!is.null(entry)) entry$example_code else NA_character_,
       concepts = if (!is.null(entry)) {
         unique(c(entry$keywords, entry$concepts))
       } else character(0),
@@ -255,6 +274,7 @@ extract_signatures <- function(pkg, coverage = "full", allowlist = NULL) {
     description = .rd_section(rd, tags, "\\description"),
     value = .rd_section(rd, tags, "\\value"),
     examples = .rd_section(rd, tags, "\\examples", clean = FALSE),
+    example_code = .runnable_example(rd),
     arguments = .rd_arguments(rd, tags),
     keywords = trimws(vapply(rd[tags == "\\keyword"], .rd_flatten,
                              character(1))),

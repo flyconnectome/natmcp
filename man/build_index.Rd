@@ -7,7 +7,9 @@
 build_index(
   config = system.file("config", "packages.yml", package = "natmcp"),
   out_dir = file.path("inst", "index"),
-  scope = c("offline", "online")
+  scope = c("offline", "online"),
+  shapes = FALSE,
+  shape_timeout = 60
 )
 }
 \arguments{
@@ -19,6 +21,13 @@ build_index(
 
 \item{scope}{\code{"offline"} (CI-runnable core) or \code{"online"} (enrichment
 overlay needing CAVE/neuprint auth).}
+
+\item{shapes}{If \code{TRUE}, run each function's offline-runnable \verb{@examples} in
+a sandboxed \link[callr:callr]{callr} process to capture a freshness status and a best-effort
+return shape (Phase 6). Off by default; CI turns it on. Requires \code{callr}.}
+
+\item{shape_timeout}{Per-example wall-clock timeout in seconds when
+\code{shapes = TRUE}.}
 }
 \value{
 Invisibly, the path to the written index directory.
