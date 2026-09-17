@@ -53,7 +53,9 @@ jobs:
       # natmcp's own dependencies (from DESCRIPTION), then install natmcp.
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pak
+          # callr is a Suggests but required for the shapes pass (Phase 6);
+          # "hard" deps otherwise keep the install lean.
+          extra-packages: any::pak, any::callr
           dependencies: '"hard"'
 
       - name: Install natmcp
