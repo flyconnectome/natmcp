@@ -4,20 +4,33 @@
 \alias{fetch_index}
 \title{Fetch a published natmcp index}
 \usage{
-fetch_index(source = NULL, cache_dir = NULL)
+fetch_index(source = NULL, cache_dir = NULL, force = FALSE)
 }
 \arguments{
-\item{source}{Where to fetch from (release asset / Pages URL); default TBD.}
+\item{source}{Base URL or direct \code{index.rds} URL to fetch from (see details).}
 
-\item{cache_dir}{Local cache directory for the downloaded index.}
+\item{cache_dir}{Local cache directory (default:
+\code{tools::R_user_dir("natmcp", "cache")}).}
+
+\item{force}{Re-download even when the cached copy is already current.}
 }
 \value{
-Invisibly, the path to the local index.
+Invisibly, the path to the local index directory.
 }
 \description{
-The server-side half of the deployment split: pulls the latest index
-artifact published by CI (see \code{\link[=build_index]{build_index()}}) and verifies schema +
-natverse-SHA compatibility from its manifest. Serving needs no natverse
-toolchain, so this runs the same for a local stdio server or a hosted HTTP
-endpoint. Not yet implemented -- Phase 7.
+The server-side half of the deployment split: pulls the index artifact
+published by CI (see \code{\link[=build_index]{build_index()}}) to a local cache and verifies schema
+compatibility from its manifest. Serving needs no natverse toolchain, so this
+runs the same for a local stdio server or a hosted HTTP endpoint. Once
+fetched, the cached index is picked up automatically by
+\code{\link[=natmcp_mcp_server]{natmcp_mcp_server()}} / the tools when \code{index = NULL}.
+}
+\details{
+\code{source} is a base URL (the directory holding \code{index.rds} + \code{manifest.json})
+or a direct \code{index.rds} URL. When \code{NULL} it is taken from the
+\code{natmcp.index_url} option, then the \code{NATMCP_INDEX_URL} environment variable,
+then the default GitHub Pages location. The manifest is fetched first; if its
+\code{schema_version} does not match the installed package the download is refused
+with an upgrade hint. A re-fetch is skipped when the cached copy already has
+the same \code{built_at}, unless \code{force = TRUE}.
 }

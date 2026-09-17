@@ -335,18 +335,92 @@ extract_signatures <- function(pkg, coverage = "full", allowlist = NULL) {
 
 #' Fetch a published natmcp index
 #'
-#' The server-side half of the deployment split: pulls the latest index
-#' artifact published by CI (see [build_index()]) and verifies schema +
-#' natverse-SHA compatibility from its manifest. Serving needs no natverse
-#' toolchain, so this runs the same for a local stdio server or a hosted HTTP
-#' endpoint. Not yet implemented -- Phase 7.
+#' The server-side half of the deployment split: pulls the index artifact
+#' published by CI (see [build_index()]) to a local cache and verifies schema
+#' compatibility from its manifest. Serving needs no natverse toolchain, so this
+#' runs the same for a local stdio server or a hosted HTTP endpoint. Once
+#' fetched, the cached index is picked up automatically by
+#' [natmcp_mcp_server()] / the tools when `index = NULL`.
 #'
-#' @param source Where to fetch from (release asset / Pages URL); default TBD.
-#' @param cache_dir Local cache directory for the downloaded index.
-#' @return Invisibly, the path to the local index.
+#' @details
+#' `source` is a base URL (the directory holding `index.rds` + `manifest.json`)
+#' or a direct `index.rds` URL. When `NULL` it is taken from the
+#' `natmcp.index_url` option, then the `NATMCP_INDEX_URL` environment variable,
+#' then the default GitHub Pages location. The manifest is fetched first; if its
+#' `schema_version` does not match the installed package the download is refused
+#' with an upgrade hint. A re-fetch is skipped when the cached copy already has
+#' the same `built_at`, unless `force = TRUE`.
+#'
+#' @param source Base URL or direct `index.rds` URL to fetch from (see details).
+#' @param cache_dir Local cache directory (default:
+#'   `tools::R_user_dir("natmcp", "cache")`).
+#' @param force Re-download even when the cached copy is already current.
+#' @return Invisibly, the path to the local index directory.
 #' @export
-fetch_index <- function(source = NULL, cache_dir = NULL) {
-  stop("fetch_index() is not implemented yet (Phase 7). See PLAN.md.")
+fetch_index <- function(source = NULL, cache_dir = NULL, force = FALSE) {
+  source <- source %||% getOption("natmcp.index_url") %||%
+    Sys.getenv("NATMCP_INDEX_URL", unset = .default_index_url)
+  base <- sub("/index\\.rds$", "", source)
+  base <- sub("/$", "", base)
+  manifest_url <- paste0(base, "/manifest.json")
+  index_url <- paste0(base, "/index.rds")
+  cache_dir <- cache_dir %||% tools::R_user_dir("natmcp", "cache")
+
+  manifest <- tryCatch(
+    suppressWarnings(jsonlite::read_json(manifest_url, simplifyVector = TRUE)),
+    error = function(e) {
+      cli::cli_abort(c("Could not read index manifest from {.url {manifest_url}}.",
+                       x = conditionMessage(e)))
+    })
+  remote_schema <- as.character(manifest$schema_version)
+  if (!identical(remote_schema, .schema_version)) {
+    cli::cli_abort(c(
+      "Index schema mismatch.",
+      i = "Published index is schema {.val {remote_schema}}; this natmcp expects \\
+           {.val {.schema_version}}.",
+      i = "Update natmcp (or point {.arg source} at a matching index)."))
+  }
+
+  fs::dir_create(cache_dir)
+  local_manifest <- file.path(cache_dir, "manifest.json")
+  if (!isTRUE(force) && file.exists(file.path(cache_dir, "index.rds")) &&
+      file.exists(local_manifest)) {
+    cur <- tryCatch(jsonlite::read_json(local_manifest, simplifyVector = TRUE),
+                    error = function(e) NULL)
+    if (!is.null(cur) && identical(cur$built_at, manifest$built_at)) {
+      cli::cli_alert_info("Index already current ({manifest$built_at}); \\
+                          cached at {.path {cache_dir}}.")
+      return(invisible(cache_dir))
+    }
+  }
+
+  tmp <- tempfile(fileext = ".rds")
+  on.exit(unlink(tmp), add = TRUE)
+  ok <- tryCatch({
+    if (file.exists(index_url)) {
+      file.copy(index_url, tmp, overwrite = TRUE)       # local / mounted source
+    } else {
+      utils::download.file(index_url, tmp, mode = "wb", quiet = TRUE)
+    }
+    TRUE
+  }, error = function(e) {
+    cli::cli_abort(c("Could not fetch index from {.url {index_url}}.",
+                     x = conditionMessage(e)))
+  })
+  # Validate before committing to cache.
+  idx <- tryCatch(readRDS(tmp), error = function(e) {
+    cli::cli_abort("Downloaded index is not a valid .rds: {conditionMessage(e)}")
+  })
+  if (!is.list(idx) || is.null(idx$manifest) || is.null(idx$signatures)) {
+    cli::cli_abort("Downloaded index is missing expected fields.")
+  }
+  file.copy(tmp, file.path(cache_dir, "index.rds"), overwrite = TRUE)
+  jsonlite::write_json(manifest, local_manifest, auto_unbox = TRUE,
+                       pretty = TRUE, null = "null")
+  cli::cli_alert_success(
+    "Fetched index ({manifest$n_signatures} signatures, built {manifest$built_at}) \\
+     to {.path {cache_dir}}.")
+  invisible(cache_dir)
 }
 
 #' Read the scrape configuration

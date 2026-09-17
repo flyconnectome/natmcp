@@ -28,6 +28,8 @@
   if (nzchar(p)) return(p)
   dev <- file.path("inst", "index", "index.rds")
   if (file.exists(dev)) return(dev)
+  cached <- file.path(tools::R_user_dir("natmcp", "cache"), "index.rds")
+  if (file.exists(cached)) return(cached)
   ""
 }
 

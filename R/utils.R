@@ -6,6 +6,10 @@
 # Bump when extraction logic changes in a way that should invalidate a rebuild.
 .extractor_version <- "0.1.0"
 
+# Default location of the CI-published index (GitHub Pages). Overridable via the
+# `natmcp.index_url` option or the `NATMCP_INDEX_URL` environment variable.
+.default_index_url <- "https://flyconnectome.github.io/natmcp"
+
 #' Null-coalescing helper
 #' @noRd
 `%||%` <- function(a, b) if (is.null(a)) b else a
