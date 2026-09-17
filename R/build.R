@@ -78,6 +78,22 @@ build_index <- function(config = system.file("config", "packages.yml",
     cli::cli_alert_success("{.pkg {p}} {ver}: {length(recs)} signature{?s}")
   }
 
+  # Tier-2 harvest: snippets (Rd examples + vignettes), tagged against the full
+  # signature set, plus a lexical retrieval document.
+  name_index <- .name_index(list(signatures = signatures))
+  snippets <- list()
+  for (rec in signatures) {
+    sn <- .rd_example_snippet(rec)
+    if (!is.null(sn)) snippets[[sn$id]] <- .tag_snippet(sn, name_index)
+  }
+  for (p in names(sources)) {
+    for (sn in harvest_vignettes(p)) {
+      snippets[[sn$id]] <- .tag_snippet(sn, name_index)
+    }
+  }
+  find_doc <- .build_find_doc(signatures, snippets)
+  cli::cli_alert_success("Harvested {length(snippets)} snippet{?s}")
+
   manifest <- list(
     schema_version = .schema_version,
     extractor_version = .extractor_version,
@@ -85,12 +101,14 @@ build_index <- function(config = system.file("config", "packages.yml",
     built_at = as.character(Sys.time()),
     n_packages = length(pkgmeta),
     n_signatures = length(signatures),
+    n_snippets = length(snippets),
     packages = unname(pkgmeta)
   )
-  index <- list(manifest = manifest, signatures = signatures, sources = sources)
+  index <- list(manifest = manifest, signatures = signatures,
+                snippets = snippets, find_doc = find_doc, sources = sources)
   .write_index(index, out_dir)
-  cli::cli_alert_info("Wrote index ({length(signatures)} signatures from \\
-                      {length(sources)} package{?s}) to {.path {out_dir}}")
+  cli::cli_alert_info("Wrote index ({length(signatures)} signatures, \\
+                      {length(snippets)} snippets) to {.path {out_dir}}")
   invisible(out_dir)
 }
 
