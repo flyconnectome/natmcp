@@ -1,16 +1,4 @@
-# A small jsonlite-backed index shared across the tool tests.
-build_test_index <- function() {
-  cfg <- list(
-    classification = list(package_marker = "DESCRIPTION",
-                          non_package_coverage = "corpus-only"),
-    tier_A_core = list("jsonlite"), adjacent = list(), exclude = list("base")
-  )
-  tc <- tempfile(fileext = ".yml")
-  yaml::write_yaml(cfg, tc)
-  od <- tempfile()
-  suppressMessages(build_index(config = tc, out_dir = od, scope = "offline"))
-  od
-}
+# build_test_index() is defined in helper-index.R.
 
 test_that("tool_signature returns the ground-truth signature", {
   od <- build_test_index()
