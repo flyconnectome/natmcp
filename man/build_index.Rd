@@ -6,7 +6,7 @@
 \usage{
 build_index(
   config = system.file("config", "packages.yml", package = "natmcp"),
-  out_dir = NULL,
+  out_dir = file.path("inst", "index"),
   scope = c("offline", "online")
 )
 }
@@ -21,7 +21,7 @@ build_index(
 overlay needing CAVE/neuprint auth).}
 }
 \value{
-Invisibly, the path to the written index.
+Invisibly, the path to the written index directory.
 }
 \description{
 Runs the ingestion pipeline: resolve sources from the scrape config,
