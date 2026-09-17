@@ -5,6 +5,3 @@
 inst/index/
 *.o
 *.so
-
-# local-only until shared
-PLAN.md
