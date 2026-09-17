@@ -22,9 +22,37 @@
 tool_guide <- function(lean = TRUE) .nyi("guide")
 
 #' Tool: map a task to candidate functions + a canonical snippet
+#'
+#' Lexical retrieval (v1) over the index's function + snippet documents. Returns
+#' the top candidate functions (id, usage, one-line intent) and a canonical
+#' snippet — a matching harvested snippet, else the top function's Rd example.
 #' @param task Natural-language description of the task.
+#' @param package Optional package name to restrict candidates.
+#' @param dataset Optional dataset name (reserved for Phase 4; unused for now).
+#' @param index Optional index path/dir.
+#' @param n Maximum number of candidate functions to return.
 #' @noRd
-tool_find <- function(task, package = NULL, dataset = NULL) .nyi("find")
+tool_find <- function(task, package = NULL, dataset = NULL, index = NULL,
+                      n = 5L) {
+  idx <- .load_index(index)
+  scored <- .score_find(idx$find_doc, task, package = package)
+  funcs <- Filter(function(x) x$kind == "function", scored)
+  candidates <- lapply(utils::head(funcs, n), function(x) {
+    rec <- idx$signatures[[x$ref]]
+    list(id = rec$id, usage = rec$usage,
+         intent = .first_sentence(rec$description), score = x$score)
+  })
+  snips <- Filter(function(x) x$kind == "snippet", scored)
+  snip <- if (length(snips)) {
+    idx$snippets[[snips[[1]]$ref]]
+  } else if (length(funcs)) {
+    idx$snippets[[paste0(funcs[[1]]$ref, "#example")]]
+  } else {
+    NULL
+  }
+  list(query = task, candidates = candidates,
+       snippet = .render_snippet(snip))
+}
 
 #' Tool: ground-truth signature for a function
 #'
@@ -67,8 +95,32 @@ tool_signature <- function(symbol, index = NULL) {
 }
 
 #' Tool: canonical usage snippet(s)
+#'
+#' Fetch a snippet by `id`, or retrieve the best-matching snippet for a `task`
+#' (falling back to the top matching function's Rd example).
+#' @param task Natural-language description of the task.
+#' @param id A snippet id (e.g. `pkg::fn#example`).
+#' @param index Optional index path/dir.
 #' @noRd
-tool_snippet <- function(task = NULL, id = NULL) .nyi("snippet")
+tool_snippet <- function(task = NULL, id = NULL, index = NULL) {
+  idx <- .load_index(index)
+  if (!is.null(id)) {
+    sn <- idx$snippets[[id]]
+    if (is.null(sn)) return(list(error = "not-found", id = id))
+    return(.render_snippet(sn))
+  }
+  if (!is.null(task)) {
+    scored <- .score_find(idx$find_doc, task, kinds = "snippet")
+    if (length(scored)) return(.render_snippet(idx$snippets[[scored[[1]]$ref]]))
+    ff <- .score_find(idx$find_doc, task, kinds = "function")
+    if (length(ff)) {
+      sn <- idx$snippets[[paste0(ff[[1]]$ref, "#example")]]
+      if (!is.null(sn)) return(.render_snippet(sn))
+    }
+    return(list(query = task, error = "no-snippet"))
+  }
+  stop("Provide either `task` or `id`.")
+}
 
 #' Tool: dataset facts (id conventions, coord space, auth, quirks)
 #' @noRd
