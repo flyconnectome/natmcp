@@ -1,7 +1,7 @@
 # Internal constants and small helpers shared across the builder and server.
 
 # Bump when the on-disk index layout changes (index.rds / manifest.json shape).
-.schema_version <- "2"
+.schema_version <- "3"
 
 # Bump when extraction logic changes in a way that should invalidate a rebuild.
 .extractor_version <- "0.1.0"

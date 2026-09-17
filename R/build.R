@@ -94,6 +94,13 @@ build_index <- function(config = system.file("config", "packages.yml",
   find_doc <- .build_find_doc(signatures, snippets)
   cli::cli_alert_success("Harvested {length(snippets)} snippet{?s}")
 
+  # Tier-3 curated corpus: guide, dataset facts, auto-seeded package roles.
+  guide <- .load_guide()
+  datasets <- .datasets_records(.load_datasets())
+  roles <- .package_roles(names(sources))
+  for (p in names(roles)) pkgmeta[[p]]$role <- roles[[p]]
+  cli::cli_alert_success("Folded in guide + {length(datasets)} dataset{?s}")
+
   manifest <- list(
     schema_version = .schema_version,
     extractor_version = .extractor_version,
@@ -102,10 +109,12 @@ build_index <- function(config = system.file("config", "packages.yml",
     n_packages = length(pkgmeta),
     n_signatures = length(signatures),
     n_snippets = length(snippets),
+    n_datasets = length(datasets),
     packages = unname(pkgmeta)
   )
   index <- list(manifest = manifest, signatures = signatures,
-                snippets = snippets, find_doc = find_doc, sources = sources)
+                snippets = snippets, find_doc = find_doc,
+                guide = guide, datasets = datasets, sources = sources)
   .write_index(index, out_dir)
   cli::cli_alert_info("Wrote index ({length(signatures)} signatures, \\
                       {length(snippets)} snippets) to {.path {out_dir}}")
