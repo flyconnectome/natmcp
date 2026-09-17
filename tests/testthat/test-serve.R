@@ -20,6 +20,31 @@ test_that("natmcp_tools selects by group name and warns on unknown", {
   expect_warning(natmcp_tools(tools = c("guide", "nope")), "nope")
 })
 
+# Mirrors mcptools:::is_structured_content_result(): a fully-named list is
+# emitted as JSON (structuredContent + JSON text) on MCP protocol >= 2025-06-18.
+# If a handler returns an atomic/unnamed value it silently degrades to the
+# newline-joined "free text" fallback, so guard every tool's return shape.
+fully_named_list <- function(x) {
+  is.list(x) && !is.null(names(x)) &&
+    length(names(x)) == length(x) && all(nzchar(names(x)))
+}
+
+test_that("every tool returns a JSON-serialisable named list", {
+  od <- build_test_index()
+  tl <- natmcp_tools(index = od)
+  results <- list(
+    guide     = tool_named(tl, "natmcp_guide")(),
+    find      = tool_named(tl, "natmcp_find")(task = "parse json"),
+    signature = tool_named(tl, "natmcp_signature")(symbol = "jsonlite::fromJSON"),
+    dataset   = tool_named(tl, "natmcp_dataset")(name = "flywire"),
+    lint      = tool_named(tl, "natmcp_lint")(code = "jsonlite::fromJSON(x)")
+  )
+  for (nm in names(results)) {
+    expect_true(fully_named_list(results[[nm]]),
+                info = sprintf("tool %s must return a fully-named list", nm))
+  }
+})
+
 test_that("tools invoke against a bound index", {
   od <- build_test_index()
   tl <- natmcp_tools(index = od)
