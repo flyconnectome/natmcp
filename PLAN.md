@@ -120,11 +120,20 @@ live services needing CAVE/neuprint tokens, which CI lacks.
    end-to-end over stdio: initialize / tools/list / tools/call; `c(btw_tools(),
    natmcp_tools())` = 42 tools, no name collision).
 6. **Return-shape execution + freshness** — sandboxed example run captures
-   shapes, flags stale examples (offline core). ← next
-7. **CI + fetch** — GitHub Action builds the offline-core index on a schedule +
-   natverse-release trigger, publishes the artifact; `fetch_index()` pulls it.
-   Optional online-enrichment overlay where tokens exist. (needs publish-target
-   decision.)
+   shapes, flags stale examples (offline core). ✅ done (`R/shapes.R`;
+   `build_index(shapes = TRUE)`, off by default, CI turns it on; callr sandbox,
+   null device, per-example timeout; freshness in manifest, shape surfaced in
+   `signature`).
+7. **CI + fetch** — ✅ done. Publish target decided: **GitHub Pages** (best CI
+   plumbing — `actions/deploy-pages`, no external secret). `.github/workflows/
+   build-index.yaml` installs the natverse (best-effort), builds the
+   offline-core index with shapes, deploys `_site` to Pages;
+   `fetch_index(source, cache_dir, force)` pulls + schema-checks + caches it
+   (also accepts a local/mounted path). `.index_path(NULL)` falls back to the
+   cache so a fetched index is used automatically. R-CMD-check workflow added.
+   Still TODO: online-enrichment overlay where CAVE/neuprint tokens exist
+   (candidate host: flyem.mrc-lmb.cam.ac.uk, which also fits a future hosted
+   HTTP MCP endpoint); natverse-release trigger for the build.
 
 ## Decisions
 

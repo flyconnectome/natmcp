@@ -19,6 +19,55 @@ building robust, extensible, publication-grade code.
 > **Experimental.** The API and index format may change without notice, and
 > natmcp is not yet on CRAN. Install from GitHub.
 
+## Use it
+
+**1. Install the package** (R ≥ 3.5):
+
+```r
+# install.packages("remotes")
+remotes::install_github("flyconnectome/natmcp")
+```
+
+**2. Get an index.** Either pull the CI-built one (no natverse toolchain
+needed)…
+
+```r
+natmcp::fetch_index()   # caches the published index locally
+```
+
+…or build one yourself from your installed natverse (introspects the *dev*
+packages you actually have):
+
+```r
+natmcp::build_index()
+```
+
+**3. Point your agent at the server.** natmcp speaks MCP over stdio; configure
+your client to launch it with `Rscript`.
+
+- **Claude Code:**
+
+  ```bash
+  claude mcp add natmcp -- Rscript -e "natmcp::natmcp_mcp_server()"
+  ```
+
+- **Claude Desktop / other MCP clients** — add to the client's MCP config:
+
+  ```json
+  {
+    "mcpServers": {
+      "natmcp": {
+        "command": "Rscript",
+        "args": ["-e", "natmcp::natmcp_mcp_server()"]
+      }
+    }
+  }
+  ```
+
+The server resolves its index automatically: a local `build_index()` output, or
+the `fetch_index()` cache. To also expose generic package docs, serve natmcp
+alongside `btw` in one process: `c(btw::btw_tools(), natmcp::natmcp_tools())`.
+
 ## Tools
 
 | Tool | Job |
