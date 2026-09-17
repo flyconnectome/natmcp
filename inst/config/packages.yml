@@ -1,0 +1,93 @@
+# natmcp scrape configuration
+# -----------------------------------------------------------------------------
+# Declares WHERE to look and HOW to classify, not a static package list.
+# The builder enumerates each org's repos live (via gh / GitHub API) and
+# classifies every candidate by the `classification` rule below. `overrides`
+# handle exceptions; `adjacent` covers external CRAN foundations that are not
+# in the orgs. Every scraped artifact is recorded in the build manifest with
+# its git SHA + package version, so a build is reproducible and auditable.
+
+# --- Organisations: all repos are candidates ---------------------------------
+orgs:
+  natverse:
+    default_tier: extended        # core members promoted via tier_A_core below
+    default_coverage: full        # namespace + Rd + examples + vignettes + pkgdown
+    include_private: false
+  flyconnectome:
+    default_tier: incubating
+    default_coverage: full
+    include_private: false        # opt-in; many are unpublished / data / scripts
+
+# --- Classification rule (auto, at enumeration time) -------------------------
+classification:
+  # A repo with a top-level DESCRIPTION is an R package -> full/allowlist index.
+  # A repo without one is treated as a sample-code source -> corpus-only:
+  # its .R / .Rmd files are harvested as snippets, no signature indexing.
+  package_marker: DESCRIPTION
+  non_package_coverage: corpus-only
+
+# --- Tier A: client-facing core (altitude the agent should reach for first) --
+# Promoted out of `extended`; these get the richest treatment + guide altitude
+# notes. Roughly natverse_packages() minus deep-internal/support packages.
+tier_A_core:
+  - nat
+  - nat.nblast
+  - nat.templatebrains
+  - nat.flybrains
+  - nat.utils
+  - fafbseg
+  - neuprintr
+  - coconat
+  - coconatfly
+  - elmr
+  - hemibrainr
+  - rcatmaid
+  - malevnc
+  - malecns
+  - bancr
+  - fancr
+  - natmanager
+
+# --- Tier B: adjacent foundations (external, allowlist of interop surface) ----
+# NOT in the orgs. Index only the entry points that interoperate with nat
+# objects, plus a curated interop note. Lists are curated and extensible.
+adjacent:
+  rgl:
+    coverage: allowlist
+    interop: "3D display backend for nat objects (plot3d methods, snapshots)"
+    functions: [plot3d, points3d, lines3d, segments3d, shade3d, wire3d,
+                spheres3d, open3d, par3d, bg3d, aspect3d, rgl.snapshot, movie3d]
+  Rvcg:
+    coverage: allowlist
+    interop: "mesh IO, cleaning, decimation, nearest-point queries for surfaces"
+    functions: [vcgImport, vcgPlyRead, vcgClean, vcgIsolated, vcgSmooth,
+                vcgQEdecim, vcgUpdateNormals, vcgKDtree, vcgClost, vcgArea, vcgVolume]
+  Morpho:
+    coverage: allowlist
+    interop: "landmark registration / morphometrics used in bridging & mirroring"
+    functions: [mirror, rotonto, rotmesh.onto, computeTransform, applyTransform,
+                tps3d, deform, procSym]
+  igraph:
+    coverage: allowlist
+    interop: "neuron represented as a graph (nat ngraph <-> igraph)"
+    functions: [graph_from_data_frame, as_data_frame, distances, shortest_paths,
+                all_shortest_paths, degree, page_rank, components, subcomponent,
+                ego, neighbors, V, E]
+
+# --- Overrides: classification exceptions ------------------------------------
+overrides:
+  natverse/colorRamps: {skip: true}                 # fork mirror, not a natverse pkg
+  flyconnectome/tracing_code_snippets: {coverage: corpus-only}
+  flyconnectome/ol_annotations:        {coverage: corpus-only}   # data/annotations
+  flyconnectome/hemibrain_olf_data:    {coverage: corpus-only}   # data
+  flyconnectome/temca2data:            {coverage: corpus-only}   # paper code
+
+# --- Tier C: explicitly out of scope (agent already knows these) -------------
+exclude:
+  - base
+  - dplyr
+  - ggplot2
+  - tibble
+  - purrr
+  - stringr
+  - magrittr
