@@ -7,11 +7,12 @@
 natmcp_tools(tools = NULL, index = NULL)
 }
 \arguments{
-\item{tools}{Optional character vector selecting tool groups (e.g.
-\code{"guide"}, \code{"find"}, \code{"signature"}, \code{"snippet"}, \code{"dataset"}, \code{"lint"});
+\item{tools}{Optional character vector selecting tools by group name
+(\code{"guide"}, \code{"find"}, \code{"signature"}, \code{"snippet"}, \code{"dataset"}, \code{"lint"});
 \code{NULL} returns all.}
 
-\item{index}{Path to a built index (see \code{\link[=build_index]{build_index()}}).}
+\item{index}{Path to a built index (see \code{\link[=build_index]{build_index()}}); \code{NULL} uses the
+packaged/locally built index.}
 }
 \value{
 A list of \code{ellmer::tool()} objects.

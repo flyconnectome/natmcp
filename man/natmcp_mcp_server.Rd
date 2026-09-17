@@ -4,12 +4,15 @@
 \alias{natmcp_mcp_server}
 \title{Serve the natmcp tools over MCP}
 \usage{
-natmcp_mcp_server(index = NULL, tools = NULL)
+natmcp_mcp_server(index = NULL, tools = NULL, ...)
 }
 \arguments{
-\item{index}{Path to a built index (see \code{\link[=build_index]{build_index()}}).}
+\item{index}{Path to a built index (see \code{\link[=build_index]{build_index()}}); \code{NULL} uses the
+packaged/locally built index.}
 
 \item{tools}{Tool groups to serve (see \code{\link[=natmcp_tools]{natmcp_tools()}}); \code{NULL} for all.}
+
+\item{...}{Passed to \code{\link[mcptools:mcp_server]{mcptools::mcp_server()}} (e.g. \code{type}, \code{port}).}
 }
 \description{
 Convenience wrapper around \code{\link[mcptools:mcp_server]{mcptools::mcp_server()}} that serves
@@ -19,10 +22,7 @@ tools are delegated to \code{btw}; combine them by serving
 \code{c(btw::btw_tools(), natmcp_tools())} yourself if you want both.
 }
 \details{
-Transport defaults to stdio for local clients (Claude Desktop/Code).
-Dataset-touching tools can run inside a live session via
-\code{\link[mcptools:mcp_session]{mcptools::mcp_session()}} so they inherit the user's CAVE/neuprint auth.
-With \code{index = NULL} the latest CI-published index is obtained via
-\code{\link[=fetch_index]{fetch_index()}} (Option C: build in CI, serve anywhere).
-Not yet implemented -- Phase 5.
+Transport is stdio for local clients (Claude Desktop/Code). With
+\code{index = NULL} the packaged/locally built index is used; pulling the latest
+CI-published index via \code{\link[=fetch_index]{fetch_index()}} (Option C) is added in Phase 7.
 }
