@@ -351,6 +351,10 @@ extract_signatures <- function(pkg, coverage = "full", allowlist = NULL) {
 #' with an upgrade hint. A re-fetch is skipped when the cached copy already has
 #' the same `built_at`, unless `force = TRUE`.
 #'
+#' You rarely need to call this yourself: the tools call it on first use when
+#' no index is found (unless `options(natmcp.auto_fetch = FALSE)`). Call it
+#' again to pick up a newer published index.
+#'
 #' @param source Base URL or direct `index.rds` URL to fetch from (see details).
 #' @param cache_dir Local cache directory (default:
 #'   `tools::R_user_dir("natmcp", "cache")`).

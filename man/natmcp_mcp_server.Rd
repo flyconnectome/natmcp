@@ -4,13 +4,18 @@
 \alias{natmcp_mcp_server}
 \title{Serve the natmcp tools over MCP}
 \usage{
-natmcp_mcp_server(index = NULL, tools = NULL, ...)
+natmcp_mcp_server(index = NULL, tools = NULL, run_r = TRUE, ...)
 }
 \arguments{
 \item{index}{Path to a built index (see \code{\link[=build_index]{build_index()}}); \code{NULL} uses the
 packaged/locally built index.}
 
 \item{tools}{Tool groups to serve (see \code{\link[=natmcp_tools]{natmcp_tools()}}); \code{NULL} for all.}
+
+\item{run_r}{If \code{TRUE} (default), also serve \code{natmcp_run_r}, which runs R
+code in a connected R session that has opted in with
+\code{\link[=natmcp_session]{natmcp_session()}}\code{(run_r = TRUE)} and refuses everywhere else. Omitted
+when the \code{evaluate} package is not installed.}
 
 \item{...}{Passed to \code{\link[mcptools:mcp_server]{mcptools::mcp_server()}} (e.g. \code{type}, \code{port}).}
 }
@@ -23,6 +28,8 @@ tools are delegated to \code{btw}; combine them by serving
 }
 \details{
 Transport is stdio for local clients (Claude Desktop/Code). With
-\code{index = NULL} the packaged/locally built index is used; pulling the latest
-CI-published index via \code{\link[=fetch_index]{fetch_index()}} (Option C) is added in Phase 7.
+\code{index = NULL} a packaged or locally built index is used, else the
+\code{\link[=fetch_index]{fetch_index()}} cache. If none exists, the first tool call runs
+\code{\link[=fetch_index]{fetch_index()}} automatically; set \code{options(natmcp.auto_fetch = FALSE)} to
+disable this.
 }

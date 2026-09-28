@@ -5,3 +5,4 @@
 inst/index/
 *.o
 *.so
+docs

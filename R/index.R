@@ -2,8 +2,8 @@
 #
 # The index is a single list saved as index.rds (records) plus a human-readable
 # manifest.json (provenance / freshness). build_index() writes it; the tools
-# read it via .load_index(). fetch_index() (Phase 7) will pull a CI-published
-# index.rds; until then tools load a locally built or packaged index.
+# read it via .load_index(), which calls fetch_index() to pull the CI-published
+# index.rds into the user cache on first use when no local index exists.
 
 #' @noRd
 .write_index <- function(index, out_dir) {
@@ -36,8 +36,19 @@
 #' @noRd
 .load_index <- function(index = NULL) {
   p <- .index_path(index)
+  why <- NULL
+  # First use with no index anywhere: pull the published one into the cache.
+  if (is.null(index) && !nzchar(p) &&
+      isTRUE(getOption("natmcp.auto_fetch", TRUE))) {
+    why <- tryCatch({
+      fetch_index()
+      NULL
+    }, error = function(e) conditionMessage(e))
+    p <- .index_path()
+  }
   if (!nzchar(p) || !file.exists(p)) {
-    stop("No natmcp index found. Run build_index() (Phase 2) or fetch_index().")
+    stop("No natmcp index found. Run fetch_index() or build_index().",
+         if (!is.null(why)) paste0("\nAutomatic fetch failed: ", why))
   }
   readRDS(p)
 }

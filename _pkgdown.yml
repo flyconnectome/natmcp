@@ -1,0 +1,26 @@
+url: https://flyconnectome.github.io/natmcp/
+template:
+  bootstrap: 5
+
+reference:
+- title: Getting started
+  desc: Set up natmcp for Claude and connect your R session.
+  contents:
+  - natmcp_setup
+  - natmcp_session
+- title: Server and tools
+  contents:
+  - natmcp_mcp_server
+  - natmcp_tools
+- title: Index
+  desc: Fetch the published natverse index or build your own.
+  contents:
+  - fetch_index
+  - build_index
+  - read_config
+- title: Data
+  contents:
+  - nv_datasets
+- title: Package
+  contents:
+  - natmcp-package

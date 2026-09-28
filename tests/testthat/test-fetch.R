@@ -38,3 +38,32 @@ test_that("fetch_index errors clearly on an unreachable source", {
       source = file.path(tempfile(), "nowhere"), cache_dir = cache)),
     "manifest")
 })
+
+test_that(".load_index fetches the published index on first use", {
+  src <- build_test_index("jsonlite")
+  cache <- tempfile()
+  local_mocked_bindings(
+    .index_path = function(index = NULL) {
+      p <- file.path(cache, "index.rds")
+      if (file.exists(p)) p else ""
+    },
+    fetch_index = function(...) {
+      fs::dir_create(cache)
+      file.copy(file.path(src, "index.rds"), cache)
+    }
+  )
+  idx <- .load_index()
+  expect_identical(idx$manifest$schema_version, .schema_version)
+  expect_true(file.exists(file.path(cache, "index.rds")))
+})
+
+test_that(".load_index reports why an automatic fetch failed", {
+  local_mocked_bindings(
+    .index_path = function(index = NULL) "",
+    fetch_index = function(...) stop("offline")
+  )
+  expect_error(.load_index(), "Automatic fetch failed: offline")
+  old <- options(natmcp.auto_fetch = FALSE)
+  on.exit(options(old), add = TRUE)
+  expect_error(.load_index(), "No natmcp index found")
+})

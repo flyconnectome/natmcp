@@ -3,5 +3,7 @@
 export(build_index)
 export(fetch_index)
 export(natmcp_mcp_server)
+export(natmcp_session)
+export(natmcp_setup)
 export(natmcp_tools)
 export(read_config)
