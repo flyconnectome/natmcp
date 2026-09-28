@@ -28,45 +28,131 @@ building robust, extensible, publication-grade code.
 remotes::install_github("flyconnectome/natmcp")
 ```
 
-**2. Get an index.** Either pull the CI-built one (no natverse toolchain
-needed)…
+**2. Tell Claude about the server.** You don't start natmcp yourself: Claude
+launches it in the background (as `Rscript -e "natmcp::natmcp_mcp_server()"`)
+whenever it needs it. You just have to register that command once.
+
+First find the full path to your `Rscript` — apps started from the Dock/Start
+menu don't see your shell `PATH`, so a bare `Rscript` often fails. In R:
 
 ```r
-natmcp::fetch_index()   # caches the published index locally
+file.path(R.home("bin"), "Rscript")
+#> e.g. "/Library/Frameworks/R.framework/Resources/bin/Rscript"
 ```
 
-…or build one yourself from your installed natverse (introspects the *dev*
-packages you actually have):
+Use that path wherever `/path/to/Rscript` appears below.
+
+### Claude desktop app (chat)
+
+1. Open **Settings → Developer → Edit Config**. This reveals
+   `claude_desktop_config.json` (macOS:
+   `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`).
+2. Add a `natmcp` entry under `mcpServers`. If the file already has other
+   servers, add `natmcp` alongside them rather than replacing the file:
+
+   ```json
+   {
+     "mcpServers": {
+       "natmcp": {
+         "command": "/path/to/Rscript",
+         "args": ["-e", "natmcp::natmcp_mcp_server()"]
+       }
+     }
+   }
+   ```
+
+3. **Quit Claude completely** (Cmd-Q / File → Exit, not just closing the
+   window) and reopen it.
+4. Check it worked: *Settings → Developer* should list `natmcp` as
+   **running**, and in a new chat the tools menu below the message box should
+   show natmcp's tools. Try asking
+   *"Using natmcp, what's the signature of nat::nlapply?"*
+
+If it shows an error, click it for the log — the usual culprits are a wrong
+`Rscript` path or natmcp not being installed in the R library that `Rscript`
+uses.
+
+### Claude Code (terminal, IDE, or the desktop app's Code tab)
+
+One command; `-s user` makes it available in every project:
+
+```bash
+claude mcp add -s user natmcp -- /path/to/Rscript -e "natmcp::natmcp_mcp_server()"
+```
+
+Check with `claude mcp list` (should say `natmcp … ✔ Connected`), or `/mcp`
+inside a session.
+
+### Other MCP clients
+
+Use the same `command` and `args` in whatever config the client uses for a
+local ("stdio") server.
+
+That's it. The first time Claude uses a natmcp tool, the server downloads the
+published natverse index into your user cache (a few seconds, once). To pick
+up a newer published index later, run `natmcp::fetch_index()` in R.
+
+## Connect Claude to your running R session (optional)
+
+By default the server runs in its own throwaway R process. You can instead
+point it at the R session you are working in (RStudio, Positron, a terminal)
+so that tool calls are answered *there* — this is what makes it possible for
+Claude to see your objects and, if you allow it, run code for you.
+
+**1. Register your session.** In the R session you want Claude to use:
 
 ```r
-natmcp::build_index()
+mcptools::mcp_session()
 ```
 
-**3. Point your agent at the server.** natmcp speaks MCP over stdio; configure
-your client to launch it with `Rscript`.
+This returns immediately and leaves the console free; the session just
+listens in the background. To do this automatically in every interactive
+session, add it to your `~/.Rprofile` (`usethis::edit_r_profile()`):
 
-- **Claude Code:**
+```r
+if (interactive() && requireNamespace("mcptools", quietly = TRUE))
+  mcptools::mcp_session()
+```
 
-  ```bash
-  claude mcp add natmcp -- Rscript -e "natmcp::natmcp_mcp_server()"
-  ```
+**2. Ask Claude to connect.** In a chat, say something like
+*"list my R sessions and connect to the RStudio one"*. Claude uses the
+`list_r_sessions` and `select_r_session` tools (provided automatically by
+natmcp's server) to pick it. From then on its tool calls run in that session
+until you restart Claude or it selects another.
 
-- **Claude Desktop / other MCP clients** — add to the client's MCP config:
+### Letting Claude run code in your session
 
-  ```json
-  {
-    "mcpServers": {
-      "natmcp": {
-        "command": "Rscript",
-        "args": ["-e", "natmcp::natmcp_mcp_server()"]
-      }
-    }
-  }
-  ```
+On its own, natmcp only *looks things up* — it never executes code. For true
+two-way work (Claude runs R in your session, sees the printed output, plots,
+warnings and errors, and you see the resulting objects in your environment),
+also serve [btw](https://posit-dev.github.io/btw/)'s opt-in `run_r` tool.
+Replace the `args` in your config with:
 
-The server resolves its index automatically: a local `build_index()` output, or
-the `fetch_index()` cache. To also expose generic package docs, serve natmcp
-alongside `btw` in one process: `c(btw::btw_tools(), natmcp::natmcp_tools())`.
+```json
+"args": ["-e", "options(btw.run_r.enabled = TRUE); mcptools::mcp_server(tools = c(btw::btw_tools(c('docs', 'env', 'run')), natmcp::natmcp_tools()))"]
+```
+
+(for Claude Code, remove and re-add the server with the same expression after
+`-e`). This needs the `evaluate` package installed. Restart Claude, register
+your session as above, and ask Claude to connect to it; you can then say
+e.g. *"read the FAFB DA1 PNs into `da1` and plot them"*.
+
+> **Security.** `run_r` executes arbitrary R code in your global environment
+> with your permissions — it can read/write files, delete objects, and use any
+> credentials your session has. Claude asks before each tool call unless you
+> have told it to always allow that tool; keep that approval on for `run_r`
+> unless you are comfortable with what it may run. Leave it out of the config
+> when you only want natmcp's look-up tools.
+
+### Trying the tools by hand
+
+The tools are plain `ellmer::tool()` objects, so you can call one directly
+from R without any MCP client:
+
+```r
+sig <- natmcp::natmcp_tools("signature")[[1]]  # pick one tool by group
+sig(symbol = "nat::read.neurons")              # returns the tool's result
+```
 
 ## Tools
 
@@ -93,16 +179,23 @@ Two decoupled artefacts:
 - **The server (code).** [`natmcp_mcp_server()`](R/serve.R) serves the tools
   over MCP (stdio) by reading a built index. Serving needs no natverse
   toolchain, so the same server runs as a local per-user process or a hosted
-  endpoint. The plan (Option C) is to build the index in CI and have the
-  server fetch the published artefact.
+  endpoint. The index is built in CI and published; the server fetches it
+  on first use (`fetch_index()`).
+
+### Building your own index (developers)
+
+The published index is built in CI from the current natverse. If you want the
+tools to reflect the packages *you* have installed (e.g. development versions),
+build a local index and point the server at it:
 
 ```r
-# build an index from the installed natverse (writes inst/index by default)
-natmcp::build_index()
-
-# serve it over MCP (configure your client to run this via Rscript)
-natmcp::natmcp_mcp_server()
+natmcp::build_index(out_dir = "~/natmcp-index")  # introspects installed natverse
 ```
+
+then use `natmcp::natmcp_mcp_server(index = '~/natmcp-index')` as the `-e`
+expression in your Claude config. (With no `out_dir`, the index goes to
+`inst/index` in the working directory, which the server only finds when it is
+launched from that directory — e.g. Claude Code in the natmcp checkout.)
 
 ## Built on
 
