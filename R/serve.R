@@ -108,8 +108,14 @@ natmcp_tools <- function(tools = NULL, index = NULL) {
 #' @param index Path to a built index (see [build_index()]); `NULL` uses the
 #'   packaged/locally built index.
 #' @param tools Tool groups to serve (see [natmcp_tools()]); `NULL` for all.
+#' @param run_r If `TRUE` (default), also serve `natmcp_run_r`, which runs R
+#'   code in a connected R session that has opted in with
+#'   [natmcp_session()]`(run_r = TRUE)` and refuses everywhere else. Omitted
+#'   when the `evaluate` package is not installed.
 #' @param ... Passed to [mcptools::mcp_server()] (e.g. `type`, `port`).
 #' @export
-natmcp_mcp_server <- function(index = NULL, tools = NULL, ...) {
-  mcptools::mcp_server(tools = natmcp_tools(tools = tools, index = index), ...)
+natmcp_mcp_server <- function(index = NULL, tools = NULL, run_r = TRUE, ...) {
+  tl <- natmcp_tools(tools = tools, index = index)
+  if (isTRUE(run_r)) tl <- c(tl, list(.run_r_tool()))
+  mcptools::mcp_server(tools = Filter(Negate(is.null), tl), ...)
 }
