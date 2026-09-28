@@ -18,6 +18,8 @@ Description: An MCP (Model Context Protocol) server that gives coding agents
     documentation to 'btw' and adding the curated natverse knowledge layer on
     top; the tools compose with 'btw' in a single server.
 License: GPL-3
+URL: https://flyconnectome.github.io/natmcp/, https://github.com/flyconnectome/natmcp
+BugReports: https://github.com/flyconnectome/natmcp/issues
 Encoding: UTF-8
 LazyData: true
 LazyDataCompression: xz

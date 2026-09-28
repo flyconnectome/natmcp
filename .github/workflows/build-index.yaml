@@ -1,11 +1,18 @@
-# Build the offline-core natmcp index and publish it to GitHub Pages.
-# fetch_index() pulls the result from https://flyconnectome.github.io/natmcp/.
+# Publish the GitHub Pages site: the pkgdown docs plus the natmcp index.
+# fetch_index() pulls index.rds + manifest.json from the site root,
+# https://flyconnectome.github.io/natmcp/, alongside the pkgdown pages.
+#
+# Pages deploys replace the whole site, so docs and index ship together. The
+# index is rebuilt on the weekly schedule / manual dispatch; pushes to main
+# only rebuild the docs and carry over the currently published index.
 #
 # This is the CI half of the deployment split (PLAN.md, Option C): the index
 # (data) is rebuilt on a schedule so signatures track the installed dev
 # natverse, while the package (code) ships separately. Only the offline core is
 # built here (no CAVE/neuprint tokens); online enrichment runs elsewhere.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       shapes:
@@ -55,7 +62,7 @@ jobs:
         with:
           # callr is a Suggests but required for the shapes pass (Phase 6);
           # "hard" deps otherwise keep the install lean.
-          extra-packages: any::pak, any::callr
+          extra-packages: any::pak, any::callr, any::pkgdown
           dependencies: '"hard"'
 
       - name: Install natmcp
@@ -64,6 +71,7 @@ jobs:
       # Install the packages the index introspects. Best-effort: build_index()
       # skips anything missing, so a single failing install does not abort.
       - name: Install natverse targets
+        if: github.event_name != 'push'
         run: |
           Rscript -e '
             cfg <- yaml::read_yaml("inst/config/packages.yml")
@@ -78,17 +86,35 @@ jobs:
           '
 
       - name: Build index
+        if: github.event_name != 'push'
         run: |
           Rscript -e '
             shapes <- tolower(Sys.getenv("NATMCP_SHAPES", "true")) == "true"
             natmcp::build_index(scope = "offline", shapes = shapes,
-                                out_dir = "_site")
+                                out_dir = "_index")
           '
         env:
           NATMCP_SHAPES: ${{ github.event.inputs.shapes || 'true' }}
 
+      - name: Carry over the published index
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p _index
+          for f in index.rds manifest.json; do
+            curl -fsSL -o "_index/$f" "https://flyconnectome.github.io/natmcp/$f"
+          done
+
       - name: Summarise manifest
-        run: Rscript -e 'cat(readLines("_site/manifest.json"), sep = "\n")'
+        run: Rscript -e 'cat(readLines("_index/manifest.json"), sep = "\n")'
+
+      # PLAN.md is an internal design doc; pkgdown would render any root .md.
+      - name: Build pkgdown site
+        run: |
+          rm -f PLAN.md
+          Rscript -e 'pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE, dest_dir = "_site")'
+
+      - name: Add index to site
+        run: cp _index/index.rds _index/manifest.json _site/
 
       - uses: actions/upload-pages-artifact@v3
         with:
