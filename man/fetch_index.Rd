@@ -33,4 +33,8 @@ then the default GitHub Pages location. The manifest is fetched first; if its
 \code{schema_version} does not match the installed package the download is refused
 with an upgrade hint. A re-fetch is skipped when the cached copy already has
 the same \code{built_at}, unless \code{force = TRUE}.
+
+You rarely need to call this yourself: the tools call it on first use when
+no index is found (unless \code{options(natmcp.auto_fetch = FALSE)}). Call it
+again to pick up a newer published index.
 }

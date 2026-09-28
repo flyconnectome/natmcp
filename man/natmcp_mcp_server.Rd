@@ -23,6 +23,8 @@ tools are delegated to \code{btw}; combine them by serving
 }
 \details{
 Transport is stdio for local clients (Claude Desktop/Code). With
-\code{index = NULL} the packaged/locally built index is used; pulling the latest
-CI-published index via \code{\link[=fetch_index]{fetch_index()}} (Option C) is added in Phase 7.
+\code{index = NULL} a packaged or locally built index is used, else the
+\code{\link[=fetch_index]{fetch_index()}} cache. If none exists, the first tool call runs
+\code{\link[=fetch_index]{fetch_index()}} automatically; set \code{options(natmcp.auto_fetch = FALSE)} to
+disable this.
 }

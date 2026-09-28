@@ -100,8 +100,10 @@ natmcp_tools <- function(tools = NULL, index = NULL) {
 #'
 #' @details
 #' Transport is stdio for local clients (Claude Desktop/Code). With
-#' `index = NULL` the packaged/locally built index is used; pulling the latest
-#' CI-published index via [fetch_index()] (Option C) is added in Phase 7.
+#' `index = NULL` a packaged or locally built index is used, else the
+#' [fetch_index()] cache. If none exists, the first tool call runs
+#' [fetch_index()] automatically; set `options(natmcp.auto_fetch = FALSE)` to
+#' disable this.
 #'
 #' @param index Path to a built index (see [build_index()]); `NULL` uses the
 #'   packaged/locally built index.
