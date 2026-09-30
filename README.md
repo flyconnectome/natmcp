@@ -70,8 +70,9 @@ closing the window) and reopen it. To check it worked, ask Claude
 *"Using natmcp, what's the signature of nat::nlapply?"*
 
 Run `natmcp::natmcp_setup(ask = FALSE)` to accept the defaults without
-questions; see `?natmcp_setup` for the options. To pick up a newer published
-index later, run `natmcp::fetch_index()`.
+questions; see `?natmcp_setup` for the options. The index is rebuilt weekly
+from the current natverse, and the server checks for a newer one about once a
+week; run `natmcp::fetch_index()` to pick one up straight away.
 
 ### Setting up by hand
 

@@ -30,8 +30,10 @@ tools are delegated to \code{btw}; combine them by serving
 Transport is stdio for local clients (Claude Desktop/Code). With
 \code{index = NULL} a packaged or locally built index is used, else the
 \code{\link[=fetch_index]{fetch_index()}} cache. If none exists, the first tool call runs
-\code{\link[=fetch_index]{fetch_index()}} automatically; set \code{options(natmcp.auto_fetch = FALSE)} to
-disable this.
+\code{\link[=fetch_index]{fetch_index()}} automatically, and at start-up a cached index that was last
+checked more than a week ago is refreshed if a newer one has been published
+(\code{options(natmcp.refresh_days = )} sets the interval). Set
+\code{options(natmcp.auto_fetch = FALSE)} to disable both.
 
 On macOS the socket directory used to find R sessions is pinned as
 described in \code{\link[=natmcp_session]{natmcp_session()}}. The server also offers a \code{natmcp_sitrep}

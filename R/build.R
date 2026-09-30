@@ -352,8 +352,10 @@ extract_signatures <- function(pkg, coverage = "full", allowlist = NULL) {
 #' the same `built_at`, unless `force = TRUE`.
 #'
 #' You rarely need to call this yourself: the tools call it on first use when
-#' no index is found (unless `options(natmcp.auto_fetch = FALSE)`). Call it
-#' again to pick up a newer published index.
+#' no index is found, and [natmcp_mcp_server()] calls it at start-up when the
+#' cached index was last checked more than `getOption("natmcp.refresh_days",
+#' 7)` days ago. `options(natmcp.auto_fetch = FALSE)` turns both off. Call it
+#' yourself to pick up a newer published index straight away.
 #'
 #' @param source Base URL or direct `index.rds` URL to fetch from (see details).
 #' @param cache_dir Local cache directory (default:
@@ -392,6 +394,7 @@ fetch_index <- function(source = NULL, cache_dir = NULL, force = FALSE) {
     cur <- tryCatch(jsonlite::read_json(local_manifest, simplifyVector = TRUE),
                     error = function(e) NULL)
     if (!is.null(cur) && identical(cur$built_at, manifest$built_at)) {
+      Sys.setFileTime(local_manifest, Sys.time())   # record the check
       cli::cli_alert_info("Index already current ({manifest$built_at}); \\
                           cached at {.path {cache_dir}}.")
       return(invisible(cache_dir))
