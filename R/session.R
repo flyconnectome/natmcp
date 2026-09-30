@@ -18,6 +18,11 @@
 #' tool call unless you have told it to always allow the tool. Call again with
 #' `run_r = FALSE` to revoke.
 #'
+#' On macOS, sessions and the server meet in a socket directory that mcptools
+#' derives from `TMPDIR`, which can differ between apps. natmcp pins it (via
+#' the `MCPTOOLS_SOCKET_DIR` environment variable, unless you have set it) to
+#' your per-user temp directory in both, and warns if that was not possible.
+#'
 #' To register every interactive session automatically, add
 #' `natmcp::natmcp_session(quiet = TRUE)` to your `~/.Rprofile` (or let
 #' [natmcp_setup()] do it).
@@ -42,8 +47,10 @@ natmcp_session <- function(run_r = FALSE, quiet = FALSE) {
   }
   options(natmcp.run_r = isTRUE(run_r))
   if (!isTRUE(.natmcp_state$session)) {
+    pin <- .pin_socket_dir()
     .start_mcp_session()
     .natmcp_state$session <- TRUE
+    if (identical(pin, "late")) .warn_socket_mismatch()
   }
   if (!isTRUE(quiet)) {
     cli::cli_alert_success("This R session is now available to Claude.")

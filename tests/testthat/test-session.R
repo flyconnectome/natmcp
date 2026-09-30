@@ -13,7 +13,8 @@ test_that("natmcp_run_r refuses unless the session opted in", {
 test_that("natmcp_session sets the run_r option and registers once", {
   skip_if_not_installed("evaluate")
   n <- 0
-  local_mocked_bindings(.start_mcp_session = function() n <<- n + 1)
+  local_mocked_bindings(.start_mcp_session = function() n <<- n + 1,
+                        .pin_socket_dir = function() "pinned")
   old_state <- .natmcp_state$session
   .natmcp_state$session <- NULL
   old <- options(natmcp.run_r = NULL)
