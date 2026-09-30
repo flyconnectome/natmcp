@@ -102,8 +102,10 @@ natmcp_tools <- function(tools = NULL, index = NULL) {
 #' Transport is stdio for local clients (Claude Desktop/Code). With
 #' `index = NULL` a packaged or locally built index is used, else the
 #' [fetch_index()] cache. If none exists, the first tool call runs
-#' [fetch_index()] automatically; set `options(natmcp.auto_fetch = FALSE)` to
-#' disable this.
+#' [fetch_index()] automatically, and at start-up a cached index that was last
+#' checked more than a week ago is refreshed if a newer one has been published
+#' (`options(natmcp.refresh_days = )` sets the interval). Set
+#' `options(natmcp.auto_fetch = FALSE)` to disable both.
 #'
 #' On macOS the socket directory used to find R sessions is pinned as
 #' described in [natmcp_session()]. The server also offers a `natmcp_sitrep`
@@ -120,6 +122,7 @@ natmcp_tools <- function(tools = NULL, index = NULL) {
 #' @export
 natmcp_mcp_server <- function(index = NULL, tools = NULL, run_r = TRUE, ...) {
   .pin_socket_dir()
+  .maybe_refresh_index(index)
   tl <- natmcp_tools(tools = tools, index = index)
   if (isTRUE(run_r)) tl <- c(tl, list(.run_r_tool()))
   tl <- c(tl, list(.sitrep_tool()))

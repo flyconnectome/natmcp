@@ -35,6 +35,7 @@ with an upgrade hint. A re-fetch is skipped when the cached copy already has
 the same \code{built_at}, unless \code{force = TRUE}.
 
 You rarely need to call this yourself: the tools call it on first use when
-no index is found (unless \code{options(natmcp.auto_fetch = FALSE)}). Call it
-again to pick up a newer published index.
+no index is found, and \code{\link[=natmcp_mcp_server]{natmcp_mcp_server()}} calls it at start-up when the
+cached index was last checked more than \code{getOption("natmcp.refresh_days", 7)} days ago. \code{options(natmcp.auto_fetch = FALSE)} turns both off. Call it
+yourself to pick up a newer published index straight away.
 }

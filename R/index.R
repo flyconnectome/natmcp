@@ -84,3 +84,33 @@
   )
   utils::head(ids[hits], n)
 }
+
+#' Refresh a stale cached index at server start-up
+#'
+#' Only touches the fetch_index() cache, and only when it is the index the
+#' server would use (a packaged or dev-tree index wins in .index_path()) and
+#' was last checked more than `natmcp.refresh_days` days ago. Never errors: a
+#' failed or slow check leaves the cached index in place.
+#' @return `"skipped"`, `"fresh"`, `"checked"` or `"failed"`.
+#' @noRd
+.maybe_refresh_index <- function(index = NULL) {
+  if (!is.null(index) || !isTRUE(getOption("natmcp.auto_fetch", TRUE))) {
+    return("skipped")
+  }
+  cache <- tools::R_user_dir("natmcp", "cache")
+  mf <- file.path(cache, "manifest.json")
+  p <- .index_path()
+  if (!nzchar(p) || !file.exists(mf) ||
+      !.same_dir(normalizePath(dirname(p), mustWork = FALSE),
+                 normalizePath(cache, mustWork = FALSE))) {
+    return("skipped")
+  }
+  age <- difftime(Sys.time(), file.mtime(mf), units = "days")
+  if (age < getOption("natmcp.refresh_days", 7)) return("fresh")
+  op <- options(timeout = 30)
+  on.exit(options(op))
+  tryCatch({
+    suppressMessages(fetch_index(cache_dir = cache))
+    "checked"
+  }, error = function(e) "failed")
+}
