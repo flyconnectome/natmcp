@@ -32,4 +32,8 @@ Transport is stdio for local clients (Claude Desktop/Code). With
 \code{\link[=fetch_index]{fetch_index()}} cache. If none exists, the first tool call runs
 \code{\link[=fetch_index]{fetch_index()}} automatically; set \code{options(natmcp.auto_fetch = FALSE)} to
 disable this.
+
+On macOS the socket directory used to find R sessions is pinned as
+described in \code{\link[=natmcp_session]{natmcp_session()}}. The server also offers a \code{natmcp_sitrep}
+tool so Claude can diagnose connection problems (see \code{\link[=natmcp_sitrep]{natmcp_sitrep()}}).
 }

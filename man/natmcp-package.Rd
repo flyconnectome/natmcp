@@ -12,6 +12,15 @@ ingestion pipeline, \code{\link[=natmcp_mcp_server]{natmcp_mcp_server()}} for th
 \code{\link[=natmcp_tools]{natmcp_tools()}} for the tools as ellmer tools. The tools exposed are
 \code{guide}, \code{find}, \code{signature}, \code{snippet}, \code{dataset} and \code{lint}.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://flyconnectome.github.io/natmcp/}
+  \item \url{https://github.com/flyconnectome/natmcp}
+  \item Report bugs at \url{https://github.com/flyconnectome/natmcp/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Gregory Jefferis \email{jefferis@gmail.com} (\href{https://orcid.org/0000-0002-0587-9355}{ORCID})
 

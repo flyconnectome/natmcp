@@ -34,6 +34,11 @@ creates appear in your workspace. Your Claude app asks you to approve each
 tool call unless you have told it to always allow the tool. Call again with
 \code{run_r = FALSE} to revoke.
 
+On macOS, sessions and the server meet in a socket directory that mcptools
+derives from \code{TMPDIR}, which can differ between apps. natmcp pins it (via
+the \code{MCPTOOLS_SOCKET_DIR} environment variable, unless you have set it) to
+your per-user temp directory in both, and warns if that was not possible.
+
 To register every interactive session automatically, add
 \code{natmcp::natmcp_session(quiet = TRUE)} to your \verb{~/.Rprofile} (or let
 \code{\link[=natmcp_setup]{natmcp_setup()}} do it).
