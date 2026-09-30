@@ -65,6 +65,8 @@
          and run {.code natmcp::natmcp_session()} before anything else uses
          mcptools, or put
          {.code Sys.setenv(MCPTOOLS_SOCKET_DIR = \"{canonical}\")} at the top
-         of your {.file ~/.Rprofile}."))
+         of your {.file ~/.Rprofile}.",
+    i = "Run {.code natmcp::natmcp_sitrep()} and paste the output into Claude
+         for help."))
   invisible(TRUE)
 }

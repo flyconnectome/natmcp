@@ -34,5 +34,6 @@ Transport is stdio for local clients (Claude Desktop/Code). With
 disable this.
 
 On macOS the socket directory used to find R sessions is pinned as
-described in \code{\link[=natmcp_session]{natmcp_session()}}.
+described in \code{\link[=natmcp_session]{natmcp_session()}}. The server also offers a \code{natmcp_sitrep}
+tool so Claude can diagnose connection problems (see \code{\link[=natmcp_sitrep]{natmcp_sitrep()}}).
 }

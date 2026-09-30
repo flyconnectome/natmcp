@@ -106,7 +106,8 @@ natmcp_tools <- function(tools = NULL, index = NULL) {
 #' disable this.
 #'
 #' On macOS the socket directory used to find R sessions is pinned as
-#' described in [natmcp_session()].
+#' described in [natmcp_session()]. The server also offers a `natmcp_sitrep`
+#' tool so Claude can diagnose connection problems (see [natmcp_sitrep()]).
 #'
 #' @param index Path to a built index (see [build_index()]); `NULL` uses the
 #'   packaged/locally built index.
@@ -121,5 +122,6 @@ natmcp_mcp_server <- function(index = NULL, tools = NULL, run_r = TRUE, ...) {
   .pin_socket_dir()
   tl <- natmcp_tools(tools = tools, index = index)
   if (isTRUE(run_r)) tl <- c(tl, list(.run_r_tool()))
+  tl <- c(tl, list(.sitrep_tool()))
   mcptools::mcp_server(tools = Filter(Negate(is.null), tl), ...)
 }

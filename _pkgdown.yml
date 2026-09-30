@@ -8,6 +8,7 @@ reference:
   contents:
   - natmcp_setup
   - natmcp_session
+  - natmcp_sitrep
 - title: Server and tools
   contents:
   - natmcp_mcp_server
