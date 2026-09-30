@@ -152,7 +152,7 @@ build_index <- function(config = system.file("config", "packages.yml",
 #'   `coverage` and `allowlist`.
 #' @noRd
 resolve_packages <- function(cfg) {
-  targets <- lapply(unlist(cfg$tier_A_core, use.names = FALSE), function(p) {
+  targets <- lapply(names(.core_repos(cfg)), function(p) {
     list(package = p, tier = "core", coverage = "full", allowlist = NULL)
   })
   adj <- cfg$adjacent
@@ -165,6 +165,21 @@ resolve_packages <- function(cfg) {
   }
   excl <- unlist(cfg$exclude, use.names = FALSE)
   Filter(function(t) !(t$package %in% excl), targets)
+}
+
+#' Core packages and the GitHub repos CI installs them from
+#'
+#' A `tier_A_core` entry is a package name (repo `natverse/<name>`) or a
+#' `package: owner/repo` pair.
+#' @return A character vector of `owner/repo`, named by package.
+#' @noRd
+.core_repos <- function(cfg) {
+  x <- cfg$tier_A_core
+  pkg <- vapply(x, function(e) if (is.list(e)) names(e) else e, character(1))
+  repo <- vapply(x, function(e) {
+    if (is.list(e)) e[[1]] else paste0("natverse/", e)
+  }, character(1))
+  structure(repo, names = pkg)
 }
 
 #' Extract signature records for one installed package

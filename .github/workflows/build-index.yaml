@@ -74,10 +74,9 @@ jobs:
         if: github.event_name != 'push'
         run: |
           Rscript -e '
-            cfg <- yaml::read_yaml("inst/config/packages.yml")
-            core <- unlist(cfg$tier_A_core, use.names = FALSE)
+            cfg <- natmcp::read_config("inst/config/packages.yml")
+            gh <- unname(natmcp:::.core_repos(cfg))
             adjacent <- names(cfg$adjacent)
-            gh <- paste0("natverse/", core)
             for (p in c(gh, adjacent)) {
               tryCatch(
                 pak::pkg_install(p, ask = FALSE, upgrade = FALSE),

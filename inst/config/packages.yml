@@ -29,6 +29,9 @@ classification:
 # --- Tier A: client-facing core (altitude the agent should reach for first) --
 # Promoted out of `extended`; these get the richest treatment + guide altitude
 # notes. Roughly natverse_packages() minus deep-internal/support packages.
+# Each entry is a package name, installed in CI from natverse/<name>, or a
+# `package: owner/repo` pair when the repo lives elsewhere or is named
+# differently.
 tier_A_core:
   - nat
   - nat.nblast
@@ -41,12 +44,13 @@ tier_A_core:
   - coconatfly
   - elmr
   - hemibrainr
-  - rcatmaid
+  - catmaid: natverse/rcatmaid
   - malevnc
   - malecns
   - bancr
-  - fancr
+  - fancr: flyconnectome/fancr
   - natmanager
+  - aedes: flyconnectome/aedes
 
 # --- Tier B: adjacent foundations (external, allowlist of interop surface) ----
 # NOT in the orgs. Index only the entry points that interoperate with nat
