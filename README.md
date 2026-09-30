@@ -179,6 +179,7 @@ sig(symbol = "nat::read.neurons")              # returns the tool's result
 | `dataset` | id conventions, coordinate space, auth, quirks |
 | `lint` | are these real, current natverse calls? |
 | `run_r` | run R code in a connected session that allows it |
+| `sitrep` | diagnose setup and session-connection problems |
 
 ## How it works
 
@@ -228,6 +229,56 @@ It introspects the [natverse](https://natverse.org) packages themselves
 (e.g. `nat`, `coconatfly`, `neuprintr`, `fafbseg`, `nat.templatebrains`,
 `nat.flybrains`), plus a curated interop surface of adjacent foundations
 (`rgl`, `Rvcg`, `Morpho`, `igraph`).
+
+## FAQ
+
+### Can I see the code Claude runs in my R session?
+
+Not as it runs. `natmcp_run_r` evaluates code in the background, so nothing
+is echoed to your console and it doesn't appear in your R history. Claude's
+app shows each call (and asks you to approve it unless you've allowed the tool
+permanently), and objects it creates appear in your workspace. If you want a
+record you can read, rerun and share, ask Claude to work in a notebook
+instead, e.g. *"put each step in `analysis.Rmd` as a chunk, then run it"*.
+You then have the code alongside its results, and can run chunks yourself.
+
+### Claude can't connect to my R session
+
+Run this in the R session Claude should use, and paste the output into
+Claude:
+
+```r
+natmcp::natmcp_sitrep()
+```
+
+It shows natmcp's Claude configuration, the index, whether the session is
+registered and allows running code, and which R sessions are visible. Claude
+can run the same report from the server (the `natmcp_sitrep` tool) and
+compare the two. The usual fixes:
+
+1. **natmcp isn't running in Claude.** Rerun `natmcp::natmcp_setup()` and
+   **fully quit** and reopen Claude. *Settings → Developer* (desktop chat) or
+   `claude mcp list` (Claude Code) should list `natmcp`.
+2. **The session isn't registered.** Run `natmcp::natmcp_session()` in it
+   (or add it to your `.Rprofile` with `natmcp_setup(rprofile = TRUE)`).
+3. **Claude picked the wrong session**, or lost it after a restart. Ask it to
+   *"list my R sessions"* and name the one you mean (they are listed by
+   working directory).
+4. **Claude says it can't run code.** Run `natmcp::natmcp_session(run_r = TRUE)`
+   in that session (and install `evaluate` if asked).
+
+**Sessions list is empty (macOS).** R sessions and the server meet in a
+socket directory that mcptools derives from `TMPDIR`, and apps launched from
+the Dock (like Claude) can see a different `TMPDIR` from your terminal or
+RStudio. natmcp pins both sides to your per-user temp directory, but can only
+do so if mcptools isn't already loaded; `natmcp_session()` warns if that
+happened and `natmcp_sitrep()` flags a `MISMATCH`. Restart R and call
+`natmcp_session()` first, or pin the directory yourself at the **top** of
+your `~/.Rprofile` with the path the warning suggests:
+
+```r
+Sys.setenv(MCPTOOLS_SOCKET_DIR = "/var/folders/ab/c123.../T/mcptools")
+```
 
 ## Reference
 
