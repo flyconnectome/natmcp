@@ -1,5 +1,10 @@
 # natmcp (development version)
 
+* The server refreshes a cached index that was last checked more than a week
+  ago (`natmcp.refresh_days`) by @jefferis in https://github.com/flyconnectome/natmcp/pull/4
+* Index aedes, and fix CI installs of fancr and catmaid (core packages can
+  now name their GitHub repo) by @jefferis in https://github.com/flyconnectome/natmcp/pull/3
+
 # natmcp 0.2.0
 
 First release.
