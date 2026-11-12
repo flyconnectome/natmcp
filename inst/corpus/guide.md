@@ -27,6 +27,11 @@ Reach for the *highest* layer that answers the question:
   `malecns`, `malevnc`, `bancr`, `fancr`). Drop to these when you need
   dataset-specific queries, metadata, segmentation/mesh access or auth that
   `coconatfly` does not surface.
+- **Indirect connectivity → `influencer`.** How strongly one group of neurons
+  drives another through all paths, not only direct synapses: a linear
+  steady-state model of signal flow over the whole connectome. Use it for "what
+  does X affect", sensory → motor and other multi-hop questions. Direct partners
+  stay with `coconatfly`.
 - **Neuron/image geometry → `nat` (core).** Low-level data structures and
   operations (read/plot/transform/prune neurons and skeletons, spatial
   queries). Reach here for manipulation below the connectivity layer.
@@ -49,6 +54,10 @@ Tier-A natverse core and clients:
   handling.
 - **`malecns`, `malevnc`, `bancr`, `fancr`** — access packages for the male CNS,
   male VNC, BANC and FANC datasets.
+- **`influencer`** — influence scores from an edgelist and a meta table, using
+  the model of the ConnectomeInfluenceCalculator. `influence_calculator_r()` is
+  pure R and runs anywhere; `influence_calculator_py()` wraps the faster Python
+  calculator, which needs PETSc/SLEPc (`install_python_influence_calculator()`).
 - **`nat.templatebrains`** — machinery for registration and bridging between
   template brains; a key reference for transforms.
 - **`nat.flybrains`** — the concrete fly template brains and bridging registrations
@@ -82,3 +91,34 @@ Typical pipelines, highest layer first:
   (with `nat.flybrains` registrations) → target space, then plot or compare.
 - **Graph:** neuron skeleton or connectivity → `igraph` for paths, components
   and centrality.
+- **Influence:** edgelist + meta → `influencer::influence_calculator_r()`
+  once → `ic$calculate_influence(seed_ids)` per seed group →
+  `adjust_influence()` → rank targets.
+
+## Influence: settings change the answer
+
+Influence results depend on a few settings. Most mistakes come from these:
+
+- **Build once, reuse.** Building the calculator factorises the whole matrix;
+  each `calculate_influence()` call then returns influence on every neuron.
+  Loop over seed groups with one calculator and filter to targets afterwards.
+- **Restrict the edgelist to `meta` first.** A raw edgelist holds every
+  segmented body, often many times the number of annotated neurons. Keep edges
+  whose pre and post are both in `meta`.
+- **Report adjusted influence.** `adjust_influence()` gives `log(r) + const`,
+  with `const = 24` (influence below `exp(-24)` becomes 0). Use raw influence
+  only when asked, and name the normalisation used (`_norm_by_targets`,
+  `_norm_by_sources_and_targets`).
+- **`lambda_max` sets the reach.** The default 0.99 amplifies the leading mode
+  about 100×. If every seed gives nearly the same profile, that mode is
+  swamping seed identity: sweep `lambda_max` before calling it a finding. For
+  profile similarity, clustering or UMAP, use about 0.5 and z-score each seed
+  column.
+- **Defaults differ by entry point.** `count_thresh` is 3 in
+  `influence_calculator_r()` and `influence_calculator()`, but 0 in
+  `influence_calculator_py()`. Signed mode needs `inhibitory_nts`. State
+  `lambda_max`, `count_thresh`, `syn_weight_measure` and `signed` beside any
+  result.
+- **Influence is not direct output.** A cell type can cluster with feeding
+  circuits by influence while its synapses go mostly to leg premotor neurons.
+  Check direct partners before saying what a cluster does.

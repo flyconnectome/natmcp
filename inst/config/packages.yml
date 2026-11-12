@@ -51,6 +51,7 @@ tier_A_core:
   - fancr: flyconnectome/fancr
   - natmanager
   - aedes: flyconnectome/aedes
+  - influencer
 
 # --- Tier B: adjacent foundations (external, allowlist of interop surface) ----
 # NOT in the orgs. Index only the entry points that interoperate with nat

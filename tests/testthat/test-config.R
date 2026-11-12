@@ -11,7 +11,8 @@ test_that("packaged scrape config parses and has the expected shape", {
 
   # core promoted set + adjacent allowlist tiers
   core <- .core_repos(cfg)
-  expect_true(all(c("nat", "coconatfly", "fafbseg", "aedes") %in% names(core)))
+  expect_true(all(c("nat", "coconatfly", "fafbseg", "aedes", "influencer") %in% names(core)))
+  expect_identical(core[["influencer"]], "natverse/influencer")
   expect_identical(core[["nat"]], "natverse/nat")
   expect_identical(core[["catmaid"]], "natverse/rcatmaid")
   expect_identical(core[["aedes"]], "flyconnectome/aedes")
