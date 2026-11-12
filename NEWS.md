@@ -1,5 +1,8 @@
 # natmcp (development version)
 
+* Index influencer, and add influence analysis to the guide: when to use it,
+  and the settings that change its results
+  by @alexanderbates in https://github.com/flyconnectome/natmcp/pull/5
 * The server refreshes a cached index that was last checked more than a week
   ago (`natmcp.refresh_days`) by @jefferis in https://github.com/flyconnectome/natmcp/pull/4
 * Index aedes, and fix CI installs of fancr and catmaid (core packages can
